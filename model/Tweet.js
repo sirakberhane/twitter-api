@@ -23,6 +23,14 @@ const tweetSchema = new mongoose.Schema({
   edited: {
     type: Boolean,
     default: false
+  },
+  retweeted: {
+    type: Boolean,
+    default: false
+  },
+  retweeted_id: {
+    type: String,
+    default: null
   }, 
   likes: Array,
   retweets: Array

@@ -146,8 +146,51 @@ router.post("/:tweet_id/unlike", authentication, async (req, res) => {
 });
 
 // Section 3: Retweet route
-router.post("/:tweet_id/retweet", authentication, async (req, res) => { 
-  
+router.post("/:tweet_id/retweet", authentication, async (req, res) => {
+  var tempTweet;
+  await Tweet.find({ _id: req.params.tweet_id }, (err, oneTweet) => {
+    if (err) {  // Check that there is no errors, if there is send server status error 500
+      console.log({ error_message: "No tweets were found" });
+    }
+
+    if (oneTweet) {
+      tempTweet = oneTweet;
+    } else {
+      console.log({ error_message: "No tweets were found" });
+    }
+  });
+
+  await Tweet.find({ _id: req.params.tweet_id },
+    (err, oneTweet) => {
+      if (err) {  // Check that there is no errors, if there is send server status error 500
+        console.log({ error_message: "No tweets were found" });
+      }
+
+      if (oneTweet) {} else {
+        console.log({ error_message: "No tweets were found" });
+      }
+    }).updateOne({
+      $addToSet: { // This only add the user to the record once (unique)
+        retweets: { user_id: req.user_data._id, username: req.user_data.username }, // Save which user liked the tweet
+      }
+    });
+
+  const tweet = new Tweet({
+    user_id: req.user_data._id,
+    username: req.user_data.username,
+    content: tempTweet[0].content,
+    retweeted: true,
+    retweets: tempTweet[0].retweets,
+    retweeted_id: tempTweet[0]._id
+  });
+
+  try {
+    const newTweet = await tweet.save(); // Save the new tweet to MongoDB
+    // Show what was saved to the database
+    res.send({ success: true, success_message: `Retweeted a tweet with ID of ${req.params.tweet_id}`, tweet: newTweet});
+  } catch (err) {
+    res.status(500).send(err); // Error occured while saving tweet to DB
+  }
 });
 
 // TODO ~ Section 3: Threading
